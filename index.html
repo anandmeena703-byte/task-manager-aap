@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager Pro</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:#f4f7fc;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:800px;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:25px;
+    color:#333;
+}
+
+.input-box{
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+.input-box input{
+    flex:1;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:8px;
+}
+
+.input-box button{
+    padding:12px 20px;
+    background:#4f46e5;
+    color:white;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.filters{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+}
+
+.filters button{
+    padding:8px 15px;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+    background:#e5e7eb;
+}
+
+.filters button.active{
+    background:#4f46e5;
+    color:white;
+}
+
+.stats{
+    text-align:center;
+    margin-bottom:20px;
+    font-weight:bold;
+    color:#555;
+}
+
+.task{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#f8fafc;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:12px;
+}
+
+.task.completed .task-text{
+    text-decoration:line-through;
+    color:gray;
+}
+
+.actions{
+    display:flex;
+    gap:8px;
+}
+
+.actions button{
+    border:none;
+    padding:8px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.complete{
+    background:#22c55e;
+    color:white;
+}
+
+.edit{
+    background:#f59e0b;
+    color:white;
+}
+
+.delete{
+    background:#ef4444;
+    color:white;
+}
+
+@media(max-width:600px){
+
+.task{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+}
+
+.actions{
+    width:100%;
+    justify-content:flex-end;
+}
+
+.input-box{
+    flex-direction:column;
+}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>Task Manager Pro</h1>
+
+<div class="input-box">
+<input type="text" id="taskInput" placeholder="Enter task">
+<button onclick="addTask()">Add Task</button>
+</div>
+
+<div class="filters">
+<button class="active" onclick="setFilter('all',this)">All</button>
+<button onclick="setFilter('active',this)">Active</button>
+<button onclick="setFilter('completed',this)">Completed</button>
+</div>
+
+<div class="stats">
+Total Tasks: <span id="taskCount">0</span>
+</div>
+
+<div id="taskContainer"></div>
+
+</div>
+
+<script>
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let currentFilter = "all";
+
+function saveTasks(){
+localStorage.setItem("tasks",JSON.stringify(tasks));
+}
+
+function addTask(){
+
+const input = document.getElementById("taskInput");
+
+if(input.value.trim()===""){
+alert("Enter a task");
+return;
+}
+
+tasks.push({
+text:input.value,
+completed:false
+});
+
+input.value="";
+
+saveTasks();
+renderTasks();
+}
+
+function deleteTask(index){
+
+tasks.splice(index,1);
+
+saveTasks();
+renderTasks();
+}
+
+function toggleTask(index){
+
+tasks[index].completed=!tasks[index].completed;
+
+saveTasks();
+renderTasks();
+}
+
+function editTask(index){
+
+let newText = prompt(
+"Edit Task",
+tasks[index].text
+);
+
+if(newText && newText.trim()!==""){
+
+tasks[index].text=newText;
+
+saveTasks();
+renderTasks();
+}
+}
+
+function setFilter(filter,btn){
+
+currentFilter=filter;
+
+document
+.querySelectorAll(".filters button")
+.forEach(b=>b.classList.remove("active"));
+
+btn.classList.add("active");
+
+renderTasks();
+}
+
+function renderTasks(){
+
+const container =
+document.getElementById("taskContainer");
+
+container.innerHTML="";
+
+let filteredTasks = tasks.filter(task=>{
+
+if(currentFilter==="active")
+return !task.completed;
+
+if(currentFilter==="completed")
+return task.completed;
+
+return true;
+
+});
+
+filteredTasks.forEach(task=>{
+
+let actualIndex =
+tasks.indexOf(task);
+
+let div =
+document.createElement("div");
+
+div.className =
+task.completed ? "task completed":"task";
+
+div.innerHTML=`
+
+<span class="task-text">
+${task.text}
+</span>
+
+<div class="actions">
+
+<button
+class="complete"
+onclick="toggleTask(${actualIndex})">
+
+${task.completed ? "Undo":"Done"}
+
+</button>
+
+<button
+class="edit"
+onclick="editTask(${actualIndex})">
+
+Edit
+
+</button>
+
+<button
+class="delete"
+onclick="deleteTask(${actualIndex})">
+
+Delete
+
+</button>
+
+</div>
+
+`;
+
+container.appendChild(div);
+
+});
+
+document.getElementById("taskCount")
+.innerText = tasks.length;
+}
+
+renderTasks();
+
+</script>
+
+</body>
+</html>
